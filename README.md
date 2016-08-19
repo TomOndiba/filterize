@@ -1,3 +1,7 @@
-Save space by converting IMG_FILTER_NEGATE, etc to numbers
+== Filterize ==
 
-Opera still needs some work
+Image filtering in the web, in under 10k, and without the modern day fluff
+
+== License ==
+
+GNU General Public License v3.0
