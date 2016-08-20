@@ -1,24 +1,29 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 session_start();
+function post ($i) {return isset($_POST[$i])?$_POST[$i]:"";}
 if (!empty($_POST)) {
   if (isset($_FILES["image"]) && $_FILES["image"]["size"]) {
-    move_uploaded_file($_FILES["image"]["tmp_name"], "images/image.unk");
-    $_SESSION["temp"] = "images/image.unk";
+    if (isset($_SESSION["temp"]) && file_exists($_SESSION["temp"])) unlink($_SESSION["temp"]);
+    $_SESSION["temp"] = "images/" . uniqid();
+    move_uploaded_file($_FILES["image"]["tmp_name"], $_SESSION["temp"]);
     $_SESSION["type"] = substr($_FILES["image"]["type"], 6);
   }
   $image = call_user_func("imagecreatefrom" . $_SESSION["type"], $_SESSION["temp"]);
-  if ($_POST["negate"]) {imagefilter($image, IMG_FILTER_NEGATE);}
-  if ($_POST["grayscale"]) {imagefilter($image, IMG_FILTER_GRAYSCALE);}
-  if ($_POST["brightness"]) {imagefilter($image, IMG_FILTER_BRIGHTNESS, $_POST["brightness_level"]);}
-  if ($_POST["contrast"]) {imagefilter($image, IMG_FILTER_CONTRAST, $_POST["contrast_level"]);}
-  if ($_POST["colorize"]) {imagefilter($image, IMG_FILTER_COLORIZE, (int)$_POST["colorize_r"], (int)$_POST["colorize_g"], (int)$_POST["colorize_b"], 127 - ((empty($_POST["colorize_a"])?1:(float)$_POST["colorize_a"]) * 127));}
-  if ($_POST["edgedetect"]) {imagefilter($image, IMG_FILTER_EDGEDETECT);}
-  if ($_POST["emboss"]) {imagefilter($image, IMG_FILTER_EMBOSS);}
-  if ($_POST["gaussianblur"]) {for ($i = 0; $i < (int)$_POST["gaussianblur_rounds"]; $i++) {imagefilter($image, IMG_FILTER_GAUSSIAN_BLUR);}}
-  if ($_POST["selectiveblur"]) {for ($i = 0; $i < (int)$_POST["selectiveblur_rounds"]; $i++) {imagefilter($image, IMG_FILTER_SELECTIVE_BLUR);}}
-  if ($_POST["meanremoval"]) {for ($i = 0; $i < (int)$_POST["meanremoval_rounds"]; $i++) {imagefilter($image, IMG_FILTER_MEAN_REMOVAL);}}
-  if ($_POST["smooth"]) {imagefilter($image, IMG_FILTER_SMOOTH, (int)$_POST["smooth_level"]);}
-  if ($_POST["pixelate"]) {imagefilter($image, IMG_FILTER_PIXELATE, (int)$_POST["pixelate_blocksize"], isset($_POST["pixelate_advanced"]));}
+  if (post("negate")) {imagefilter($image, IMG_FILTER_NEGATE);}
+  if (post("grayscale")) {imagefilter($image, IMG_FILTER_GRAYSCALE);}
+  if (post("brightness")) {imagefilter($image, IMG_FILTER_BRIGHTNESS, post("brightness_level"));}
+  if (post("contrast")) {imagefilter($image, IMG_FILTER_CONTRAST, post("contrast_level"));}
+  if (post("colorize")) {imagefilter($image, IMG_FILTER_COLORIZE, (int)post("colorize_r"), (int)post("colorize_g"), (int)post("colorize_b"), 127 - ((empty(post("colorize_a"))?1:(float)post("colorize_a")) * 127));}
+  if (post("edgedetect")) {imagefilter($image, IMG_FILTER_EDGEDETECT);}
+  if (post("emboss")) {imagefilter($image, IMG_FILTER_EMBOSS);}
+  if (post("gaussianblur")) {for ($i = 0; $i < (int)post("gaussianblur_rounds"); $i++) {imagefilter($image, IMG_FILTER_GAUSSIAN_BLUR);}}
+  if (post("selectiveblur")) {for ($i = 0; $i < (int)post("selectiveblur_rounds"); $i++) {imagefilter($image, IMG_FILTER_SELECTIVE_BLUR);}}
+  if (post("meanremoval")) {for ($i = 0; $i < (int)post("meanremoval_rounds"); $i++) {imagefilter($image, IMG_FILTER_MEAN_REMOVAL);}}
+  if (post("smooth")) {imagefilter($image, IMG_FILTER_SMOOTH, (int)post("smooth_level"));}
+  if (post("pixelate")) {imagefilter($image, IMG_FILTER_PIXELATE, (int)post("pixelate_blocksize"), isset($_POST["pixelate_advanced"]));}
   ob_start();
   call_user_func("image" . $_SESSION["type"], $image);
   $image_data = "data:image/" . $_SESSION["type"] . ";base64," . base64_encode(ob_get_contents());
@@ -29,6 +34,8 @@ if (!empty($_POST)) {
 <html lang="en">
   <head>
     <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Filterize</title>
     <style media="screen">
     html, body {
@@ -118,60 +125,60 @@ if (!empty($_POST)) {
           <input type="file" name="image" accept="image/*" <?php echo isset($_SESSION["temp"])?"":"required"; ?>>
         </div>
         <div class="col-md-3 col-sm-6 col-xs-12">
-          <input type="checkbox" name="negate" value="checked" <?php echo $_POST["negate"]; ?>>Negate
+          <input type="checkbox" name="negate" value="checked" <?php echo post("negate"); ?>>Negate
         </div>
         <div class="col-md-3 col-sm-6 col-xs-12">
-          <input type="checkbox" name="grayscale" value="checked" <?php echo $_POST["grayscale"]; ?>>Grayscale
+          <input type="checkbox" name="grayscale" value="checked" <?php echo post("grayscale"); ?>>Grayscale
         </div>
         <div class="col-md-3 col-sm-6 col-xs-12">
-          <input type="checkbox" name="emboss" value="checked" <?php echo $_POST["emboss"]; ?>>Emboss
+          <input type="checkbox" name="emboss" value="checked" <?php echo post("emboss"); ?>>Emboss
         </div>
         <div class="col-md-3 col-sm-6 col-xs-12">
-          <input type="checkbox" name="edgedetect" value="checked" <?php echo $_POST["edgedetect"]; ?>>Edge Detect
+          <input type="checkbox" name="edgedetect" value="checked" <?php echo post("edgedetect"); ?>>Edge Detect
         </div>
         <div class="col-sm-4 col-xs-12">
-          <input type="checkbox" name="brightness" value="checked" <?php echo $_POST["brightness"]; ?>>Brightness
+          <input type="checkbox" name="brightness" value="checked" <?php echo post("brightness"); ?>>Brightness
           <br>
-          <input type="number" min="-255" min="255" name="brightness_level" placeholder="Level (-255 - 255)" value="<?php echo $_POST["brightness_level"]; ?>">
+          <input type="number" min="-255" max="255" name="brightness_level" placeholder="Level (-255 - 255)" value="<?php echo post("brightness_level"); ?>">
         </div>
         <div class="col-sm-4 col-xs-12">
-          <input type="checkbox" name="contrast" value="checked" <?php echo $_POST["contrast"]; ?>>Contrast
+          <input type="checkbox" name="contrast" value="checked" <?php echo post("contrast"); ?>>Contrast
           <br>
-          <input type="number" name="contrast_level" placeholder="Level (-Nan - Nan)" value="<?php echo $_POST["contrast_level"]; ?>">
+          <input type="number" name="contrast_level" placeholder="Level (-Nan - Nan)" value="<?php echo post("contrast_level"); ?>">
         </div>
         <div class="col-sm-4 col-xs-12">
-          <input type="checkbox" name="smooth" value="checked" <?php echo $_POST["smooth"]; ?>>Smooth
+          <input type="checkbox" name="smooth" value="checked" <?php echo post("smooth"); ?>>Smooth
           <br>
-          <input type="number" min="0" name="smooth_level" placeholder="Level (0 - Nan)" value="<?php echo $_POST["smooth_level"]; ?>">
+          <input type="number" min="0" name="smooth_level" placeholder="Level (0 - Nan)" value="<?php echo post("smooth_level"); ?>">
         </div>
         <div class="col-md-6 col-xs-12">
-          <input type="checkbox" name="colorize" value="checked" <?php echo $_POST["colorize"]; ?>>Colorize
+          <input type="checkbox" name="colorize" value="checked" <?php echo post("colorize"); ?>>Colorize
           <br>
-          <input type="number" min="0" max="255" name="colorize_r" placeholder="Red (0 - 255)" value="<?php echo $_POST["colorize_r"]; ?>">
-          <input type="number" min="0" max="255" name="colorize_g" placeholder="Green (0 - 255)" value="<?php echo $_POST["colorize_g"]; ?>">
+          <input type="number" min="0" max="255" name="colorize_r" placeholder="Red (0 - 255)" value="<?php echo post("colorize_r"); ?>">
+          <input type="number" min="0" max="255" name="colorize_g" placeholder="Green (0 - 255)" value="<?php echo post("colorize_g"); ?>">
           <br>
-          <input type="number" min="0" max="255" name="colorize_b" placeholder="Blue (0 - 255)" value="<?php echo $_POST["colorize_b"]; ?>">
-          <input type="number" min="0" max="1" step=0.01 name="colorize_a" placeholder="Alpha (0.0 - 1.0)" value="<?php echo $_POST["colorize_a"]; ?>">
+          <input type="number" min="0" max="255" name="colorize_b" placeholder="Blue (0 - 255)" value="<?php echo post("colorize_b"); ?>">
+          <input type="number" min="0" max="1" step=0.01 name="colorize_a" placeholder="Alpha (0.0 - 1.0)" value="<?php echo post("colorize_a"); ?>">
         </div>
         <div class="col-md-6 col-xs-12">
-          <input type="checkbox" name="pixelate" value="checked" <?php echo $_POST["pixelate"]; ?>>Pixelate
+          <input type="checkbox" name="pixelate" value="checked" <?php echo post("pixelate"); ?>>Pixelate
           <br>
-          <input type="checkbox" name="pixelate_advanced" value="checked" <?php echo $_POST["pixelate_advanced"]; ?>>Advanced Pixelation
+          <input type="checkbox" name="pixelate_advanced" value="checked" <?php echo post("pixelate_advanced"); ?>>Advanced Pixelation
           <br>
-          <input type="number" min="0" name="pixelate_blocksize" placeholder="Block Size (0 - Nan)" value="<?php echo $_POST["pixelate_blocksize"]; ?>">
+          <input type="number" min="0" name="pixelate_blocksize" placeholder="Block Size (0 - Nan)" value="<?php echo post("pixelate_blocksize"); ?>">
         </div>
         <div class="col-sm-4 col-xs-12">
-          <input type="checkbox" name="gaussianblur" value="checked" <?php echo $_POST["gaussianblur"]; ?>>Gaussian Blur
+          <input type="checkbox" name="gaussianblur" value="checked" <?php echo post("gaussianblur"); ?>>Gaussian Blur
           <br>
-          <input type="number" min="0" name="gaussianblur_rounds" placeholder="Rounds (0 - Nan)" value="<?php echo $_POST["gaussianblur_rounds"]; ?>">
+          <input type="number" min="0" name="gaussianblur_rounds" placeholder="Rounds (0 - Nan)" value="<?php echo post("gaussianblur_rounds"); ?>">
         </div>
         <div class="col-sm-4 col-xs-12">
-          <input type="checkbox" name="selectiveblur" value="checked" <?php echo $_POST["selectiveblur"]; ?>>Selective Blur
+          <input type="checkbox" name="selectiveblur" value="checked" <?php echo post("selectiveblur"); ?>>Selective Blur
           <br>
-          <input type="number" min="0" name="selectiveblur_rounds" placeholder="Rounds (0 - Nan)" value="<?php echo $_POST["selectiveblur_rounds"]; ?>">
+          <input type="number" min="0" name="selectiveblur_rounds" placeholder="Rounds (0 - Nan)" value="<?php echo post("selectiveblur_rounds"); ?>">
         </div>
         <div class="col-sm-4 col-xs-12">
-          <input type="checkbox" name="meanremoval" value="checked" <?php echo $_POST["meanremoval"]; ?>>Mean Removal
+          <input type="checkbox" name="meanremoval" value="checked" <?php echo post("meanremoval"); ?>>Mean Removal
           <br>
           <input type="number" min="0" name="meanremoval_rounds" placeholder="Rounds (0 - Nan)" value="<?php echo $_POST["meanremoval_rounds"]; ?>">
         </div>
